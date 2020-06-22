@@ -18,9 +18,30 @@
     <ClInclude Include="IFTCP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SocketHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IPVersion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Socket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PResult.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IncludeIFTCPIP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketOption.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IFTCP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -115,9 +115,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="IFTCP.h" />
+    <ClInclude Include="IncludeIFTCPIP.h" />
+    <ClInclude Include="PResult.h" />
+    <ClInclude Include="IPVersion.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="SocketHandle.h" />
+    <ClInclude Include="SocketOption.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IFTCP.cpp" />
+    <ClCompile Include="Socket.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
