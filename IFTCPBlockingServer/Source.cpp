@@ -24,9 +24,21 @@ int main() {
 		if (sock.Create() == IFTCP::PResult::P_Success) {
 			std::cout << "Socket Succesfully Created\n";
 			//sock.Bind(IFTCP::IPEndpoint("0.0.0.0", 9999));//wild card all machines can connect
-			if (sock.Bind(IFTCP::IPEndpoint("127.0.0.1", 9999)) == IFTCP::PResult::P_Success) {//only local machine can connect
-				std::cout << "socket successfully bound\n";
+			//if (sock.Bind(IFTCP::IPEndpoint("127.0.0.1", 9999)) == IFTCP::PResult::P_Success) {//only local machine can connect
+			//	std::cout << "socket successfully bound\n";
+			//}
+			if (sock.Listen(IFTCP::IPEndpoint("127.0.0.1", 9999),5) == IFTCP::PResult::P_Success) {//only local machine can connect
+				std::cout << "socket successfully listening\n";
+				IFTCP::Socket outSocket;
+				if (sock.Accept(outSocket) == IFTCP::PResult::P_Success) {
+					std::cout << "socket successfully accepted\n";
+					outSocket.Close();
+				}
+				else {
+					std::cout << "Failed to accept new connection\n";
+				}
 			}
+
 			if (sock.Close() == IFTCP::PResult::P_Success) {
 				std::cout << "Socket Succesfully Closed\n";
 			}

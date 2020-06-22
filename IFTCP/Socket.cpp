@@ -48,6 +48,18 @@ namespace IFTCP {
 		}
 		return PResult::P_Success;
 	}
+	PResult Socket::Listen(IPEndpoint endPoint, int backlog)
+	{
+		if (Bind(endPoint) != PResult::P_Success) {
+			return PResult::P_NotYetImplemented;
+		}
+		int result = listen(mSocketHandle, backlog);
+		if (result != 0) {
+			mWSAErrorCode = WSAGetLastError();
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
 	SocketHandle Socket::GetSocketHandle()
 	{
 		return mSocketHandle;
@@ -70,6 +82,17 @@ namespace IFTCP {
 			mWSAErrorCode = WSAGetLastError();
 			return PResult::P_NotYetImplemented;
 		}
+		return PResult::P_Success;
+	}
+	PResult Socket::Accept(Socket & outSocket)
+	{
+		SocketHandle acceptedConnectionHandle = accept(mSocketHandle, nullptr, nullptr);
+		if (acceptedConnectionHandle == INVALID_SOCKET) {
+			mWSAErrorCode = WSAGetLastError();
+			return PResult::P_NotYetImplemented;
+		}
+		outSocket = Socket(IPVersion::IPv4, acceptedConnectionHandle);
+
 		return PResult::P_Success;
 	}
 }

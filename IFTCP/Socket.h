@@ -13,9 +13,11 @@ namespace IFTCP {
 		PResult Create();
 		PResult Close();
 		PResult Bind(IPEndpoint endPoint);
+		PResult Listen(IPEndpoint endPoint, int backlog);
 		SocketHandle GetSocketHandle();
 		IPVersion GetIPVersion();
 		PResult SetSocketOption(SocketOption option, BOOL value);
+		PResult Accept(Socket& outSocket);
 	private:
 		
 		IPVersion mIPVersion = IPVersion::IPv4;
