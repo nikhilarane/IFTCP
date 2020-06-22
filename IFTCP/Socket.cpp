@@ -38,6 +38,16 @@ namespace IFTCP {
 		mSocketHandle = INVALID_SOCKET;
 		return PResult();
 	}
+	PResult Socket::Bind(IPEndpoint endPoint)
+	{
+		sockaddr_in addr = endPoint.GetSockaddrIPv4();
+		int result = bind(mSocketHandle,(sockaddr*) &addr, sizeof(sockaddr_in));
+		if (result != 0) {
+			mWSAErrorCode = WSAGetLastError();
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
 	SocketHandle Socket::GetSocketHandle()
 	{
 		return mSocketHandle;

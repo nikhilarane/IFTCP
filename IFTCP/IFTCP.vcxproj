@@ -116,6 +116,7 @@
   <ItemGroup>
     <ClInclude Include="IFTCP.h" />
     <ClInclude Include="IncludeIFTCPIP.h" />
+    <ClInclude Include="IPEndpoint.h" />
     <ClInclude Include="PResult.h" />
     <ClInclude Include="IPVersion.h" />
     <ClInclude Include="Socket.h" />
@@ -124,6 +125,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IFTCP.cpp" />
+    <ClCompile Include="IPEndpoint.cpp" />
     <ClCompile Include="Socket.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
