@@ -1,5 +1,6 @@
 #include "Socket.h"
 #include <assert.h>
+#include <iostream>
 
 namespace IFTCP {
 	Socket::Socket(IPVersion ipVersion, SocketHandle socketHandle):mIPVersion(ipVersion),mSocketHandle(socketHandle)
@@ -86,13 +87,34 @@ namespace IFTCP {
 	}
 	PResult Socket::Accept(Socket & outSocket)
 	{
-		SocketHandle acceptedConnectionHandle = accept(mSocketHandle, nullptr, nullptr);
+		sockaddr_in addr = {};
+		int len = sizeof(sockaddr_in);
+		SocketHandle acceptedConnectionHandle = accept(mSocketHandle, (sockaddr*)&addr, &len);
 		if (acceptedConnectionHandle == INVALID_SOCKET) {
 			mWSAErrorCode = WSAGetLastError();
 			return PResult::P_NotYetImplemented;
 		}
+		std::cout << "New Connection Accepted!\n";
+		IPEndpoint newConnectionEndPoint((sockaddr*)&addr);
+		newConnectionEndPoint.Print();
 		outSocket = Socket(IPVersion::IPv4, acceptedConnectionHandle);
 
 		return PResult::P_Success;
 	}
+	PResult Socket::Connect(IPEndpoint endPoint)
+	{
+		sockaddr_in addr = endPoint.GetSockaddrIPv4();
+		int result = connect(mSocketHandle, (sockaddr*)(&addr), sizeof(sockaddr_in));
+		if (result != 0) {
+			mWSAErrorCode = WSAGetLastError();
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
+
+	PResult Socket::Send(void * data, int numberOfByte, int & bytesSent)
+	{
+		return PResult();
+	}
+	
 }

@@ -18,6 +18,8 @@ namespace IFTCP {
 		IPVersion GetIPVersion();
 		PResult SetSocketOption(SocketOption option, BOOL value);
 		PResult Accept(Socket& outSocket);
+		PResult Connect(IPEndpoint endPoint);
+		PResult Send(void *data, int numberOfByte, int& bytesSent);
 	private:
 		
 		IPVersion mIPVersion = IPVersion::IPv4;

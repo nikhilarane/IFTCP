@@ -6,8 +6,14 @@ int main() {
 	if (IFTCP::Network::Initialise()) {
 		std::cout << "initialised\n";
 		IFTCP::Socket sock;
-		if (sock.Create()) {
+		if (sock.Create() == IFTCP::PResult::P_Success) {
 			std::cout << "Socket Succesfully Created\n";
+			if (sock.Connect(IFTCP::IPEndpoint("127.0.0.1", 9999)) == IFTCP::PResult::P_Success) {
+				std::cout << "Socket Succesfully connected\n";
+			}
+			else {
+				std::cout << "Socket connection failed\n";
+			}
 			sock.Close();
 		}
 	}

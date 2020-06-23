@@ -1,5 +1,5 @@
 #include "IPEndpoint.h"
-
+#include <iostream>
 #include <assert.h>
 
 namespace IFTCP {
@@ -37,6 +37,19 @@ namespace IFTCP {
 		}
 	}
 
+	IPEndpoint::IPEndpoint(sockaddr* addr){
+		assert(addr->sa_family = AF_INET);
+		sockaddr_in* addrv4 = reinterpret_cast<sockaddr_in*>(addr);
+		mIPVersion = IPVersion::IPv4;
+		mPort = ntohs(addrv4->sin_port);
+		mIPBytes.resize(sizeof(ULONG));
+		memcpy_s(&mIPBytes[0], sizeof(ULONG), &addrv4->sin_addr, sizeof(ULONG));
+		mIPString.resize(16);
+		inet_ntop(AF_INET, &addrv4->sin_addr, &mIPString[0], 16);
+		mHostname = mIPString;
+
+	}
+
 	IPVersion IPEndpoint::GetIPVersion()
 	{
 		return mIPVersion;
@@ -70,6 +83,29 @@ namespace IFTCP {
 		addr.sin_port = htons(mPort);
 		addr.sin_family = AF_INET;
 		return addr;
+	}
+
+	void IPEndpoint::Print()
+	{
+		switch (mIPVersion) {
+		case IPVersion::IPv4:
+			std::cout << "Internet Protocol : IPv4 " << std::endl;
+			break;
+		case IPVersion::IPv6:
+			std::cout << "Internet Protocol : IPv6 " << std::endl;
+			break;
+		default:
+			std::cout << "Internet Protocol : unknown " << std::endl;
+			break;
+
+		}
+		std::cout << "Host name : " << GetHostname() << std::endl;
+		std::cout << "IP : " << GetIPString() << std::endl;
+		std::cout << "Port : " << GetPort() << std::endl;
+		std::cout << "IP Bytes : " << std::endl;
+		for (auto & digit : GetIPBytes()) {
+			std::cout << (int)digit << std::endl;
+		}
 	}
 
 }

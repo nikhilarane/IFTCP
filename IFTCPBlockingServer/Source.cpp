@@ -31,8 +31,7 @@ int main() {
 				std::cout << "socket successfully listening\n";
 				IFTCP::Socket outSocket;
 				if (sock.Accept(outSocket) == IFTCP::PResult::P_Success) {
-					std::cout << "socket successfully accepted\n";
-					outSocket.Close();
+					std::cout << "socket successfully accepted\n";					
 				}
 				else {
 					std::cout << "Failed to accept new connection\n";
