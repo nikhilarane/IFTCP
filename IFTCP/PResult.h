@@ -4,7 +4,7 @@
 namespace IFTCP {
 	enum PResult {
 		P_Success,
-		P_NotYetImplemented
+		P_ReplaceAll
 	};
 }
 #endif

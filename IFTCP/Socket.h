@@ -19,7 +19,10 @@ namespace IFTCP {
 		PResult SetSocketOption(SocketOption option, BOOL value);
 		PResult Accept(Socket& outSocket);
 		PResult Connect(IPEndpoint endPoint);
-		PResult Send(void *data, int numberOfByte, int& bytesSent);
+		PResult Send(const void* data, int numberOfBytes, int& bytesSent);
+		PResult Receive(void* destination, int numberOfBytes, int& bytesReceived);
+		PResult SendAll(const void* data, int numberOfBytes);
+		PResult ReceiveAll(void* destination, int numberOfBytes);
 	private:
 		
 		IPVersion mIPVersion = IPVersion::IPv4;

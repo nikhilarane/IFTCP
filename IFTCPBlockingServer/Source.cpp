@@ -31,7 +31,19 @@ int main() {
 				std::cout << "socket successfully listening\n";
 				IFTCP::Socket outSocket;
 				if (sock.Accept(outSocket) == IFTCP::PResult::P_Success) {
-					std::cout << "socket successfully accepted\n";					
+					std::cout << "socket successfully accepted\n";	
+
+					char buffer[256];
+					strcpy_s(buffer, "Will finish this today\n");
+					int bytesReceived = 0;
+					int result = IFTCP::PResult::P_Success;
+					while (result == IFTCP::PResult::P_Success) {
+						result = outSocket.ReceiveAll(buffer, 256);
+						if (result != IFTCP::PResult::P_Success) {
+							break;
+						}
+						std::cout << buffer << std::endl;
+					}
 				}
 				else {
 					std::cout << "Failed to accept new connection\n";
