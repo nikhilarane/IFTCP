@@ -33,16 +33,58 @@ int main() {
 				if (sock.Accept(outSocket) == IFTCP::PResult::P_Success) {
 					std::cout << "socket successfully accepted\n";	
 
-					char buffer[256];
-					strcpy_s(buffer, "Will finish this today\n");
-					int bytesReceived = 0;
+					//char buffer[sizeof(uint32_t)];
+					//strcpy_s(buffer, "Will finish this today\n");
+					/*int bytesReceived = 0;
 					int result = IFTCP::PResult::P_Success;
-					while (result == IFTCP::PResult::P_Success) {
-						result = outSocket.ReceiveAll(buffer, 256);
+					std::string buffer = "";*/
+
+					IFTCP::Packet p;
+					//std::vector<int> vals;
+					std::string str1;
+					std::string str2;
+					while (true) {
+						IFTCP::PResult result = outSocket.Receive(p);
 						if (result != IFTCP::PResult::P_Success) {
 							break;
 						}
-						std::cout << buffer << std::endl;
+						p >> str1;
+						p >> str2;
+						uint32_t val;
+						p >> val;
+						std::cout << str1;
+						std::cout << str2;
+						std::cout << (int)val << std::endl;
+						//int sz = p.mBuffer.size() / sizeof(uint32_t);
+						////vals.resize(sz);
+						//for (int i = 0; i < sz; i++) {
+						//	uint32_t val = 0;
+						//	p >> val;
+						//	//val = (ntohl(val));
+						//	std::cout << val << std::endl;
+						//}
+						
+						//uint32_t nBytes = 0;
+						//result = outSocket.ReceiveAll(&nBytes, sizeof(uint32_t));
+						//if (result != IFTCP::PResult::P_Success) {
+						//	break;
+						//}						
+						//nBytes = ntohl(nBytes);
+						////char *vals = new char[nBytes];
+
+						//if (nBytes > IFTCP::gMaxPacketSize) {
+						//	break;
+						//}
+						//buffer.resize(nBytes);
+
+						//result = outSocket.ReceiveAll(&buffer[0], nBytes);
+
+						//if (result != IFTCP::PResult::P_Success) {
+						//	break;
+						//}
+						//std::cout << buffer << std::endl;
+						//delete[] vals;
+						
 					}
 				}
 				else {

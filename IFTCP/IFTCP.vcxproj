@@ -114,9 +114,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Constants.h" />
     <ClInclude Include="IFTCP.h" />
     <ClInclude Include="IncludeIFTCPIP.h" />
     <ClInclude Include="IPEndpoint.h" />
+    <ClInclude Include="Packet.h" />
+    <ClInclude Include="PacketException.h" />
     <ClInclude Include="PResult.h" />
     <ClInclude Include="IPVersion.h" />
     <ClInclude Include="Socket.h" />
@@ -126,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="IFTCP.cpp" />
     <ClCompile Include="IPEndpoint.cpp" />
+    <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Socket.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

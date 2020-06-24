@@ -5,6 +5,8 @@
 #include "IPVersion.h"
 #include "SocketOption.h"
 #include "IPEndpoint.h"
+#include "Constants.h"
+#include "Packet.h"
 
 namespace IFTCP {
 	class Socket {
@@ -23,6 +25,8 @@ namespace IFTCP {
 		PResult Receive(void* destination, int numberOfBytes, int& bytesReceived);
 		PResult SendAll(const void* data, int numberOfBytes);
 		PResult ReceiveAll(void* destination, int numberOfBytes);
+		PResult Send(Packet& packet);
+		PResult Receive(Packet& packet);
 	private:
 		
 		IPVersion mIPVersion = IPVersion::IPv4;
