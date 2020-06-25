@@ -34,21 +34,59 @@ int main() {
 
 				IFTCP::Packet integerArrayPacket(IFTCP::PacketType::PT_IntegerArray);
 				const uint32_t array_size = 6;
-				uint32_t integerArray[array_size] = {-1,-5,0,18,100,52};
+				int integerArray[array_size] = {-1,-5,0,18,100,52};
 				integerArrayPacket << array_size;
 				for (auto var : integerArray)
 				{
 					integerArrayPacket << var;
 				}
+				IFTCP::Packet floatArrayPacket(IFTCP::PacketType::PT_FloatArray);
+				const uint32_t floatarray_size = 5;
+				float floatintegerArray[floatarray_size] = { -1.8f,-5.3f,0.0f,18.99f,100.897f };
+				floatArrayPacket << floatarray_size;
+				for (auto var : floatintegerArray)
+				{
+					floatArrayPacket << var;
+				}
+
+				IFTCP::Packet doubleArrayPacket(IFTCP::PacketType::PT_DoubleArray);
+				const uint32_t doublearray_size = 7;
+				double doubleintegerArray[doublearray_size] = { 10.4,-1.8,-5.3,0.0,18.99, 100.897, 6789564.87654 };
+				doubleArrayPacket << doublearray_size;
+				for (auto var : doubleintegerArray)
+				{
+					doubleArrayPacket << var;
+				}
+
+				IFTCP::Packet charArrayPacket(IFTCP::PacketType::PT_CharArray);
+				const uint32_t chararray_size = 2;
+				char charArray[chararray_size] = { 'N','R' };
+				charArrayPacket << chararray_size;
+				for (auto var : charArray)
+				{
+					charArrayPacket << var;
+				}
 				while (true) {
 					//IFTCP::PResult result = sock.Send(p);
 					IFTCP::PResult result;
-					if (rand() % 2 == 0) {
+					int gamble = rand() % 5;
+					if ( gamble == 0) {
 						result = sock.Send(integerArrayPacket);
 					}
-					else {
+					else if (gamble == 1) {
 						
 						result = sock.Send(stringPacket);
+					}
+					else if (gamble == 2) {
+
+						result = sock.Send(doubleArrayPacket);
+					}
+					else if (gamble == 3) {
+
+						result = sock.Send(charArrayPacket);
+					}
+					else {
+						result = sock.Send(floatArrayPacket);
 					}
 					if (result != IFTCP::PResult::P_Success) {
 						break;

@@ -24,6 +24,10 @@ namespace IFTCP {
 		Packet& operator >> (float& data);
 		Packet& operator << (const int data);
 		Packet& operator >> (int& data);
+		Packet& operator << (const double data);
+		Packet& operator >> (double& data);
+		Packet& operator << (const char data);
+		Packet& operator >> (char& data);
 		uint32_t mExtractionOffset = 0;
 		std::vector<char> mBuffer;	
 	};

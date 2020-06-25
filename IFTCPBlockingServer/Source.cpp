@@ -22,7 +22,42 @@ bool ProcessPacket(IFTCP::Packet& p) {
 		std::cout << std::endl;
 		break;
 	}
-		
+	case IFTCP::PacketType::PT_FloatArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			float val;
+			p >> val;
+			std::cout << (float)val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	case IFTCP::PacketType::PT_DoubleArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			double val;
+			p >> val;
+			std::cout << (double)val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	case IFTCP::PacketType::PT_CharArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			char val;
+			p >> val;
+			std::cout << val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
 	default:
 		return false;
 	}

@@ -52,6 +52,26 @@ namespace IFTCP {
 		return *this;
 	}
 
+	Packet & Packet::operator<<(const char data)
+	{
+		Append(&data, 1);
+		return *this;
+	}
+
+	Packet & Packet::operator >> (char & data)
+	{
+		// TODO: insert return statement here
+		
+
+		if ((mExtractionOffset + sizeof(char)) > mBuffer.size()) {
+			throw PacketException::PacketException("Not enough data in buffer");
+		}
+		
+		memcpy_s(&data, sizeof(char), &mBuffer[mExtractionOffset], sizeof(char));
+		mExtractionOffset += sizeof(char);
+		return *this;
+	}
+
 	Packet & Packet::operator<<(const std::string & data)
 	{
 		
@@ -106,5 +126,25 @@ namespace IFTCP {
 		memcpy_s(&data, sizeof(int), &idata, sizeof(uint32_t));
 		return *this;
 	}
+
+	Packet & Packet::operator<<(const double data)
+	{
+		uint32_t idata[2] = { 0 };
+		memcpy_s(&idata[0], sizeof(double), &data, sizeof(double));
+		(*this) << idata[0];
+		(*this) << idata[1];
+		return *this;
+	}
+
+	Packet & Packet::operator >> (double & data)
+	{
+		uint32_t idata[2] = { 0 };
+		(*this) >> idata[0];
+		(*this) >> idata[1];
+		memcpy_s(&data, sizeof(double), &idata[0], sizeof(double));
+		return *this;
+	}
+
+	
 
 }
