@@ -28,25 +28,68 @@ namespace IFTCP {
 			inet_ntop(AF_INET, &host_addr->sin_addr, &mIPString[0], 16);
 			mHostname = ip;
 			ULONG ip_long = host_addr->sin_addr.S_un.S_addr;
-			mIPBytes.resize(sizeof(ULONG));			
+			mIPBytes.resize(sizeof(ULONG));
 			memcpy_s(&mIPBytes[0], sizeof(ULONG), &ip_long, sizeof(ULONG));
 			mIPVersion = IPVersion::IPv4;
 			//host_addr->sin_addr.S_un.S_addr
 			freeaddrinfo(hostinfo);
 			return;
 		}
+
+		in_addr6 addr6;//a union of 4 bytes to store ipv4 address
+		result = inet_pton(AF_INET6, ip, &addr6);
+		if (result == 1) {
+			
+				mHostname = ip;
+				mIPString = ip;
+				mIPBytes.resize(16);
+				memcpy_s(&mIPBytes[0], 16, &addr6.u, 16);
+				mIPVersion = IPVersion::IPv6;
+				return;
+			
+		}
+		addrinfo hintsv6 = {};
+		hintsv6.ai_family = AF_INET6;
+		addrinfo* hostinfov6 = nullptr;
+		result = getaddrinfo(ip, NULL, &hintsv6, &hostinfov6);
+		if (result == 0) {
+			sockaddr_in6* host_addr = reinterpret_cast<sockaddr_in6*>(hostinfov6->ai_addr);
+			mIPString.resize(46);
+			inet_ntop(AF_INET6, &host_addr->sin6_addr, &mIPString[0], 46);
+			mHostname = ip;
+
+			mIPBytes.resize(16);
+			memcpy_s(&mIPBytes[0], 16, &host_addr->sin6_addr, 16);
+			mIPVersion = IPVersion::IPv6;
+			//host_addr->sin_addr.S_un.S_addr
+			freeaddrinfo(hostinfov6);
+			return;
+		}
 	}
 
 	IPEndpoint::IPEndpoint(sockaddr* addr){
-		assert(addr->sa_family = AF_INET);
-		sockaddr_in* addrv4 = reinterpret_cast<sockaddr_in*>(addr);
-		mIPVersion = IPVersion::IPv4;
-		mPort = ntohs(addrv4->sin_port);
-		mIPBytes.resize(sizeof(ULONG));
-		memcpy_s(&mIPBytes[0], sizeof(ULONG), &addrv4->sin_addr, sizeof(ULONG));
-		mIPString.resize(16);
-		inet_ntop(AF_INET, &addrv4->sin_addr, &mIPString[0], 16);
-		mHostname = mIPString;
+		assert(addr->sa_family == AF_INET || addr->sa_family == AF_INET6);
+		if (addr->sa_family == AF_INET) {
+			sockaddr_in* addrv4 = reinterpret_cast<sockaddr_in*>(addr);
+			mIPVersion = IPVersion::IPv4;
+			mPort = ntohs(addrv4->sin_port);
+			mIPBytes.resize(sizeof(ULONG));
+			memcpy_s(&mIPBytes[0], sizeof(ULONG), &addrv4->sin_addr, sizeof(ULONG));
+			mIPString.resize(16);
+			inet_ntop(AF_INET, &addrv4->sin_addr, &mIPString[0], 16);
+			mHostname = mIPString;
+		}
+		else {
+			sockaddr_in6* addrv6 = reinterpret_cast<sockaddr_in6*>(addr);
+			mIPVersion = IPVersion::IPv6;
+			mPort = ntohs(addrv6->sin6_port);
+			mIPBytes.resize(16);
+			memcpy_s(&mIPBytes[0], 16, &addrv6->sin6_addr, 16);
+			mIPString.resize(46);
+			inet_ntop(AF_INET6, &addrv6->sin6_addr, &mIPString[0], 46);
+			mHostname = mIPString;
+		}
+		
 
 	}
 
@@ -79,9 +122,21 @@ namespace IFTCP {
 	{
 		assert(mIPVersion == IPVersion::IPv4);
 		sockaddr_in addr = {};
+		addr.sin_family = AF_INET;
 		memcpy_s(&addr.sin_addr, sizeof(ULONG), &mIPBytes[0], sizeof(ULONG));
 		addr.sin_port = htons(mPort);
-		addr.sin_family = AF_INET;
+		
+		return addr;
+	}
+
+	sockaddr_in6 IPEndpoint::GetSockaddrIPv6()
+	{
+		assert(mIPVersion == IPVersion::IPv6);
+		sockaddr_in6 addr = {};
+		addr.sin6_family = AF_INET6;
+		memcpy_s(&addr.sin6_addr, 16, &mIPBytes[0], 16);
+		addr.sin6_port = htons(mPort);
+		
 		return addr;
 	}
 

@@ -16,6 +16,7 @@ namespace IFTCP {
 		std::string GetIPString();
 		unsigned short GetPort();
 		sockaddr_in GetSockaddrIPv4();
+		sockaddr_in6 GetSockaddrIPv6();
 		void Print();
 	private:
 		IPVersion mIPVersion = IPVersion::Unknown;
