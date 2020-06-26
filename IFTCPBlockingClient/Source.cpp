@@ -1,6 +1,6 @@
-#include <IFTCP\IncludeIFTCPIP.h>
+#include "Client.h"
 #include <iostream>
-int main() {
+int mainBlocking() {
 	//int val = IFTCP::Foo(10);
 	//std::cout << val << std::endl;
 	if (IFTCP::Network::Initialise()) {
@@ -111,6 +111,18 @@ int main() {
 				std::cout << "Socket connection failed\n";
 			}
 			sock.Close();
+		}
+	}
+	IFTCP::Network::Shutdown();
+	system("pause");
+	return 0;
+}
+
+int main() {
+	Client client;
+	if (client.Connect(IPEndpoint("::1", 9999))) {
+		while (client.IsConnected()) {
+			client.Frame();
 		}
 	}
 	IFTCP::Network::Shutdown();

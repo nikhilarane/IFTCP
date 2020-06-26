@@ -20,6 +20,10 @@ namespace IFTCP {
 			mWSAErrorCode = WSAGetLastError();
 			return PResult::P_GenericError;
 		}
+
+		if (SetBlocking(false) != PResult::P_Success) {
+			return PResult::P_GenericError;
+		}
 		if (SetSocketOption(SocketOption::TCP_NoDelay, TRUE) != PResult::P_Success) {
 			return PResult::P_GenericError;
 		}
@@ -240,6 +244,18 @@ namespace IFTCP {
 		result = ReceiveAll(&packet.mBuffer[0], encodedPacketSize);
 		if (result == PResult::P_GenericError)
 			return PResult::P_GenericError;
+		return PResult::P_Success;
+	}
+
+	PResult Socket::SetBlocking(bool isBlocking)
+	{
+		unsigned long nonBlocking = 1;
+		unsigned long blocking = 0;
+		int result = ioctlsocket(mSocketHandle, FIONBIO, isBlocking ? &blocking : &nonBlocking);
+		if (result == SOCKET_ERROR) {
+			mWSAErrorCode = WSAGetLastError();
+			return PResult::P_GenericError;
+		}
 		return PResult::P_Success;
 	}
 	

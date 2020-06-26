@@ -27,6 +27,7 @@ namespace IFTCP {
 		PResult ReceiveAll(void* destination, int numberOfBytes);
 		PResult Send(Packet& packet);
 		PResult Receive(Packet& packet);
+		PResult SetBlocking(bool isBlocking);
 	private:
 		
 		IPVersion mIPVersion = IPVersion::IPv4;
