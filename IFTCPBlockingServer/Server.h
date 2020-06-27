@@ -10,6 +10,9 @@ public:
 	void Frame();
 private:
 	Socket mListeningSocket;
+	std::vector<TCPConnection> mConnections;
+	std::vector<WSAPOLLFD> mMasterFDs;
+	const int mAcceptTimeOut = 2;//2ms
 };
 
 #endif
