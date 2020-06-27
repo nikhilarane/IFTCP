@@ -19,7 +19,7 @@ namespace IFTCP {
 		SocketHandle GetSocketHandle();
 		IPVersion GetIPVersion();
 		PResult SetSocketOption(SocketOption option, BOOL value);
-		PResult Accept(Socket& outSocket);
+		PResult Accept(Socket& outSocket, IPEndpoint* endPoint = nullptr);
 		PResult Connect(IPEndpoint endPoint);
 		PResult Send(const void* data, int numberOfBytes, int& bytesSent);
 		PResult Receive(void* destination, int numberOfBytes, int& bytesReceived);

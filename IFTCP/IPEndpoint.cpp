@@ -1,6 +1,7 @@
 #include "IPEndpoint.h"
 #include <iostream>
 #include <assert.h>
+#include "Helpers.h"
 
 namespace IFTCP {
 	IPEndpoint::IPEndpoint(const char* ip, unsigned short port)
@@ -12,6 +13,8 @@ namespace IFTCP {
 			if (addr.S_un.S_addr != INADDR_NONE) {
 				mHostname = ip;
 				mIPString = ip;
+				Helpers::trim(mHostname);
+				Helpers::trim(mIPString);
 				mIPBytes.resize(sizeof(ULONG));
 				memcpy_s(&mIPBytes[0], sizeof(ULONG), &addr.S_un.S_addr, sizeof(ULONG));
 				mIPVersion = IPVersion::IPv4;
@@ -27,6 +30,8 @@ namespace IFTCP {
 			mIPString.resize(16);
 			inet_ntop(AF_INET, &host_addr->sin_addr, &mIPString[0], 16);
 			mHostname = ip;
+			Helpers::trim(mHostname);
+			Helpers::trim(mIPString);
 			ULONG ip_long = host_addr->sin_addr.S_un.S_addr;
 			mIPBytes.resize(sizeof(ULONG));
 			memcpy_s(&mIPBytes[0], sizeof(ULONG), &ip_long, sizeof(ULONG));
@@ -42,6 +47,8 @@ namespace IFTCP {
 			
 				mHostname = ip;
 				mIPString = ip;
+				Helpers::trim(mHostname);
+				Helpers::trim(mIPString);
 				mIPBytes.resize(16);
 				memcpy_s(&mIPBytes[0], 16, &addr6.u, 16);
 				mIPVersion = IPVersion::IPv6;
@@ -57,7 +64,8 @@ namespace IFTCP {
 			mIPString.resize(46);
 			inet_ntop(AF_INET6, &host_addr->sin6_addr, &mIPString[0], 46);
 			mHostname = ip;
-
+			Helpers::trim(mHostname);
+			Helpers::trim(mIPString);
 			mIPBytes.resize(16);
 			memcpy_s(&mIPBytes[0], 16, &host_addr->sin6_addr, 16);
 			mIPVersion = IPVersion::IPv6;
@@ -78,6 +86,8 @@ namespace IFTCP {
 			mIPString.resize(16);
 			inet_ntop(AF_INET, &addrv4->sin_addr, &mIPString[0], 16);
 			mHostname = mIPString;
+			Helpers::trim(mHostname);
+			Helpers::trim(mIPString);
 		}
 		else {
 			sockaddr_in6* addrv6 = reinterpret_cast<sockaddr_in6*>(addr);
@@ -88,6 +98,8 @@ namespace IFTCP {
 			mIPString.resize(46);
 			inet_ntop(AF_INET6, &addrv6->sin6_addr, &mIPString[0], 46);
 			mHostname = mIPString;
+			Helpers::trim(mHostname);
+			Helpers::trim(mIPString);
 		}
 		
 

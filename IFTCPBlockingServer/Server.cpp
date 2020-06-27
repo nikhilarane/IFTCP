@@ -1,5 +1,6 @@
 #include "Server.h"
 #include <iostream>
+//#include <IFTCP\Helpers.h>
 
 bool Server::Initialise(IPEndpoint endPoint)
 {
@@ -33,12 +34,25 @@ bool Server::Initialise(IPEndpoint endPoint)
 
 void Server::Frame()
 {
-	IFTCP::Socket newConnection;
-	if (mListeningSocket.Accept(newConnection) == IFTCP::PResult::P_Success) {
-		std::cout << "socket successfully accepted\n";
-		newConnection.Close();		
-	}
-	else {
-		std::cout << "Failed to accept new connection\n";
-	}
+	WSAPOLLFD listeningSocketFD = {};
+	listeningSocketFD.fd = mListeningSocket.GetSocketHandle();
+	listeningSocketFD.events = POLLRDNORM;
+	listeningSocketFD.revents = 0;
+	if (WSAPoll(&listeningSocketFD, 1, 2) > 0) {
+		IFTCP::Socket newConnection;
+		IPEndpoint newConnectionEndPoint;
+		if (listeningSocketFD.revents & POLLRDNORM) {
+			
+			if (mListeningSocket.Accept(newConnection,&newConnectionEndPoint) == IFTCP::PResult::P_Success) {
+				TCPConnection acceptedConnection(newConnection, newConnectionEndPoint);
+				std::cout << acceptedConnection.ToString() + " New Connection accepted\n";
+
+				acceptedConnection.Close();
+			}
+			else {
+				std::cout << "Failed to accept new connection\n";
+			}
+		}
+	} //1ms timeout
+	
 }

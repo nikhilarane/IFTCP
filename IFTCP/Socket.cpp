@@ -109,7 +109,7 @@ namespace IFTCP {
 		}
 		return PResult::P_Success;
 	}
-	PResult Socket::Accept(Socket & outSocket)
+	PResult Socket::Accept(Socket & outSocket, IPEndpoint* endPoint)
 	{
 		assert(mIPVersion == IPVersion::IPv4 || mIPVersion == IPVersion::IPv6);
 
@@ -121,9 +121,12 @@ namespace IFTCP {
 				mWSAErrorCode = WSAGetLastError();
 				return PResult::P_GenericError;
 			}
-			std::cout << "New Connection Accepted!\n";
+			if (endPoint != nullptr) {
+				*endPoint = IPEndpoint((sockaddr*)&addr);
+			}
+			//std::cout << "New Connection Accepted!\n";
 			IPEndpoint newConnectionEndPoint((sockaddr*)&addr);
-			newConnectionEndPoint.Print();
+			//newConnectionEndPoint.Print();
 			outSocket = Socket(IPVersion::IPv4, acceptedConnectionHandle);
 
 		}
@@ -135,9 +138,12 @@ namespace IFTCP {
 				mWSAErrorCode = WSAGetLastError();
 				return PResult::P_GenericError;
 			}
-			std::cout << "New IPv6 Connection Accepted!\n";
+			if (endPoint != nullptr) {
+				*endPoint = IPEndpoint((sockaddr*)&addr);
+			}
+			//std::cout << "New IPv6 Connection Accepted!\n";
 			IPEndpoint newConnectionEndPoint((sockaddr*)&addr);
-			newConnectionEndPoint.Print();
+			//newConnectionEndPoint.Print();
 			outSocket = Socket(IPVersion::IPv6, acceptedConnectionHandle);
 
 		}
