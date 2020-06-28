@@ -41,10 +41,10 @@ bool Server::Initialise(IPEndpoint endPoint)
 
 void Server::Frame()
 {
-	std::vector<WSAPOLLFD> tempFDs = mMasterFDs;
-	if (WSAPoll(tempFDs.data(), tempFDs.size(), mAcceptTimeOut) > 0) {
+	mTempFDs = mMasterFDs;
+	if (WSAPoll(mTempFDs.data(), mTempFDs.size(), mAcceptTimeOut) > 0) {
 
-		WSAPOLLFD listeningSocketFD = tempFDs[0];//listening socket
+		WSAPOLLFD listeningSocketFD = mTempFDs[0];//listening socket
 
 		IFTCP::Socket newConnectionSocket;
 		IPEndpoint newConnectionEndPoint;
@@ -67,68 +67,153 @@ void Server::Frame()
 		}
 	}
 	//connected sockets
-	for (int i = 1; i < tempFDs.size(); i++) {
+	for (int i = mTempFDs.size() - 1; i > 0 ; i--) {
 		int connectionIndex = i - 1;
 		TCPConnection& connection = mConnections[connectionIndex];
-		if (tempFDs[i].revents & POLLERR) {
-			std::cout << "Poll error occured on " << connection.ToString() << std::endl;
-			mMasterFDs.erase(mMasterFDs.begin() + i);
-			tempFDs.erase(tempFDs.begin() + i);
-			connection.Close();
-			mConnections.erase(mConnections.begin() + connectionIndex);
-			i -= 1;
+		if (mTempFDs[i].revents & POLLERR) {
+			CloseConnection(connectionIndex, "Poll error occured on ");			
 			continue;
 		}
 
-		if (tempFDs[i].revents & POLLHUP) {
-			std::cout << "Poll hang up occured on " << connection.ToString() << std::endl;
-			mMasterFDs.erase(mMasterFDs.begin() + i);
-			tempFDs.erase(tempFDs.begin() + i);
-			connection.Close();
-			mConnections.erase(mConnections.begin() + connectionIndex);
-			i -= 1;
+		if (mTempFDs[i].revents & POLLHUP) {
+			CloseConnection(connectionIndex, "Poll hang up occured on ");			
 			continue;
 		}
 
-		if (tempFDs[i].revents & POLLNVAL) {
-			std::cout << "Poll invalid socket occured on " << connection.ToString() << std::endl;
-			mMasterFDs.erase(mMasterFDs.begin() + i);
-			tempFDs.erase(tempFDs.begin() + i);
-			connection.Close();
-			mConnections.erase(mConnections.begin() + connectionIndex);
-			i -= 1;
+		if (mTempFDs[i].revents & POLLNVAL) {
+			CloseConnection(connectionIndex, "Poll invalid socket occured on ");			
 			continue;
 		}
 
-		if (tempFDs[i].revents & POLLRDNORM) {
-			char buffer[IFTCP::gMaxPacketSize];
+		if (mTempFDs[i].revents & POLLRDNORM) {
 			int bytesReceived = 0;
-			bytesReceived = recv(tempFDs[i].fd, buffer, gMaxPacketSize, 0);
+			if (connection.mPacketTask == PacketTask::ProcessPacketSize) {
+				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mPacketSize + connection.mExtractionOffset, sizeof(uint16_t) - connection.mExtractionOffset, 0);
+			}
+			else {
+				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mBuffer + connection.mExtractionOffset, connection.mPacketSize - connection.mExtractionOffset, 0);
+			}
+			
+			
 			//
 			if (bytesReceived == 0) {
-				std::cout << "[Recv == 0] Connection was lost on " << connection.ToString() << std::endl;
-				mMasterFDs.erase(mMasterFDs.begin() + i);
-				tempFDs.erase(tempFDs.begin() + i);
-				connection.Close();
-				mConnections.erase(mConnections.begin() + connectionIndex);
-				i -= 1;
+				CloseConnection(connectionIndex, "[Recv == 0] Connection was lost on ");
+				
 			}
 
 			if (bytesReceived == SOCKET_ERROR) {
 				int error = WSAGetLastError();
 				if (error != WSAEWOULDBLOCK) {
-					std::cout << "[Recv < 0] Connection was lost on " << connection.ToString() << std::endl;
-					mMasterFDs.erase(mMasterFDs.begin() + i);
-					tempFDs.erase(tempFDs.begin() + i);
-					connection.Close();
-					mConnections.erase(mConnections.begin() + connectionIndex);
-					i -= 1;
+					CloseConnection(connectionIndex, "[Recv < 0] Connection was lost on");
+					
 				}				
 			}
 
 			if (bytesReceived > 0) {
-				std::cout << " Message of size " << bytesReceived << " received from " << connection.ToString() << std::endl;
+				connection.mExtractionOffset += bytesReceived;
+				if (connection.mPacketTask == PacketTask::ProcessPacketSize) {
+					if (connection.mExtractionOffset == sizeof(uint16_t)) {
+						connection.mPacketSize = ntohs(connection.mPacketSize);
+						if (connection.mPacketSize > IFTCP::gMaxPacketSize) {
+							CloseConnection(connectionIndex, "Packet size too large. Closing connection");
+							continue;
+						}
+						connection.mExtractionOffset = 0;
+						connection.mPacketTask = PacketTask::ProcessPacketContents;
+					}
+				}
+				else {
+					if (connection.mExtractionOffset == connection.mPacketSize) {
+						Packet p;
+						p.mBuffer.resize(connection.mPacketSize);
+						memcpy_s(&p.mBuffer[0], connection.mPacketSize, &connection.mBuffer[0], connection.mPacketSize);
+						std::cout << connection.ToString() << " : ";
+						if (!ProcessPacket(p)) {
+							CloseConnection(connectionIndex, "Failed to process Packet. Closing connection");
+							continue;
+						}
+						connection.mPacketSize = 0;
+						connection.mExtractionOffset = 0;
+						connection.mPacketTask = PacketTask::ProcessPacketSize;
+					}
+				}
+				//std::cout << " Message of size " << bytesReceived << " received from " << connection.ToString() << std::endl;
 			}
 		}
 	}
+}
+
+void Server::CloseConnection(int connectionIndex, std::string reason)
+{
+	TCPConnection &connection = mConnections[connectionIndex];
+	std::cout << "[ " << reason << " ]" << connection.ToString() << std::endl;
+	mMasterFDs.erase(mMasterFDs.begin() + connectionIndex + 1);
+	mTempFDs.erase(mTempFDs.begin() + connectionIndex + 1);
+	connection.Close();
+	mConnections.erase(mConnections.begin() + connectionIndex);
+}
+
+bool Server::ProcessPacket(Packet& p)
+{
+	switch (p.GetPacketType()) {
+	case IFTCP::PacketType::PT_ChatMessage :
+	{
+		std::string str;
+		p >> str;
+		std::cout << "Chat Message : " << str ;
+		break;
+	}		
+	case IFTCP::PacketType::PT_IntegerArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			int val;
+			p >> val;
+			std::cout << val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	case IFTCP::PacketType::PT_FloatArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			float val;
+			p >> val;
+			std::cout << (float)val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	case IFTCP::PacketType::PT_DoubleArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			double val;
+			p >> val;
+			std::cout << (double)val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	case IFTCP::PacketType::PT_CharArray: {
+		uint32_t sz = 0;
+		p >> sz;
+		//sz = htonl(sz);
+		for (int i = 0; i < sz; i++) {
+			char val;
+			p >> val;
+			std::cout << val << " , ";
+		}
+		std::cout << std::endl;
+		break;
+	}
+	default:
+		std::cout << "unknown packet type\n";
+		return false;
+	}
+	return true;
 }
