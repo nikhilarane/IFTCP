@@ -1,12 +1,13 @@
 #ifndef _TCPCONNECTION_
 #define _TCPCONNECTION_
 #include "Socket.h"
+#include "PacketManager.h"
 
 namespace IFTCP {
-	enum PacketTask {
+	/*enum PacketTask {
 		ProcessPacketSize,
 		ProcessPacketContents
-	};
+	};*/
 	class TCPConnection {
 	public:
 		
@@ -14,10 +15,12 @@ namespace IFTCP {
 		void Close();
 		std::string ToString();
 		Socket mSocket;
-		PacketTask mPacketTask = PacketTask::ProcessPacketSize;
-		int mExtractionOffset = 0;
+		//PacketTask mPacketTask = PacketTask::ProcessPacketSize;
+		//int mExtractionOffset = 0;
 		char mBuffer[IFTCP::gMaxPacketSize];
-		uint16_t mPacketSize;
+		//uint16_t mPacketSize;
+		PacketManager mPMIncoming;
+		PacketManager mPMOutGoing;
 	private:
 		
 		IPEndpoint mEndPoint;

@@ -9,7 +9,8 @@ namespace IFTCP {
 		PT_IntegerArray,
 		PT_FloatArray,
 		PT_DoubleArray,
-		PT_CharArray
+		PT_CharArray,
+		PT_Test
 	};
 }
 #endif

@@ -87,11 +87,14 @@ void Server::Frame()
 
 		if (mTempFDs[i].revents & POLLRDNORM) {
 			int bytesReceived = 0;
-			if (connection.mPacketTask == PacketTask::ProcessPacketSize) {
-				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mPacketSize + connection.mExtractionOffset, sizeof(uint16_t) - connection.mExtractionOffset, 0);
+			if (connection.mPMIncoming.mCurrentTask == PacketManagerTask::ProcessPacketSize) {
+				
+				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mPMIncoming.mCurrentPacketSize + connection.mPMIncoming.mCurrentPacketExtractionOffset, sizeof(uint16_t) - connection.mPMIncoming.mCurrentPacketExtractionOffset, 0);
+				
+				
 			}
 			else {
-				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mBuffer + connection.mExtractionOffset, connection.mPacketSize - connection.mExtractionOffset, 0);
+				bytesReceived = recv(mTempFDs[i].fd, (char*)&connection.mBuffer + connection.mPMIncoming.mCurrentPacketExtractionOffset, connection.mPMIncoming.mCurrentPacketSize - connection.mPMIncoming.mCurrentPacketExtractionOffset, 0);
 			}
 			
 			
@@ -110,35 +113,52 @@ void Server::Frame()
 			}
 
 			if (bytesReceived > 0) {
-				connection.mExtractionOffset += bytesReceived;
-				if (connection.mPacketTask == PacketTask::ProcessPacketSize) {
-					if (connection.mExtractionOffset == sizeof(uint16_t)) {
-						connection.mPacketSize = ntohs(connection.mPacketSize);
-						if (connection.mPacketSize > IFTCP::gMaxPacketSize) {
+				connection.mPMIncoming.mCurrentPacketExtractionOffset += bytesReceived;
+				if (connection.mPMIncoming.mCurrentTask == PacketManagerTask::ProcessPacketSize) {
+					if (connection.mPMIncoming.mCurrentPacketExtractionOffset == sizeof(uint16_t)) {
+						connection.mPMIncoming.mCurrentPacketSize = ntohs(connection.mPMIncoming.mCurrentPacketSize);
+						if (connection.mPMIncoming.mCurrentPacketSize > IFTCP::gMaxPacketSize) {
 							CloseConnection(connectionIndex, "Packet size too large. Closing connection");
 							continue;
 						}
-						connection.mExtractionOffset = 0;
-						connection.mPacketTask = PacketTask::ProcessPacketContents;
+						connection.mPMIncoming.mCurrentPacketExtractionOffset = 0;
+						connection.mPMIncoming.mCurrentTask = PacketManagerTask::ProcessPacketContents;
 					}
 				}
 				else {
-					if (connection.mExtractionOffset == connection.mPacketSize) {
-						Packet p;
-						p.mBuffer.resize(connection.mPacketSize);
-						memcpy_s(&p.mBuffer[0], connection.mPacketSize, &connection.mBuffer[0], connection.mPacketSize);
-						std::cout << connection.ToString() << " : ";
-						if (!ProcessPacket(p)) {
-							CloseConnection(connectionIndex, "Failed to process Packet. Closing connection");
-							continue;
-						}
-						connection.mPacketSize = 0;
-						connection.mExtractionOffset = 0;
-						connection.mPacketTask = PacketTask::ProcessPacketSize;
+					if (connection.mPMIncoming.mCurrentPacketExtractionOffset == connection.mPMIncoming.mCurrentPacketSize) {
+						//Packet p;
+						//p.mBuffer.resize(connection.mPMIncoming.mCurrentPacketSize);
+						//memcpy_s(&p.mBuffer[0], connection.mPMIncoming.mCurrentPacketSize, &connection.mBuffer[0], connection.mPMIncoming.mCurrentPacketSize);
+						//std::cout << connection.ToString() << " : ";
+						/*if (!ProcessPacket(p)) {
+						CloseConnection(connectionIndex, "Failed to process Packet. Closing connection");
+						continue;
+						}*/
+						std::shared_ptr<Packet> p = std::make_shared<Packet>();
+						p->mBuffer.resize(connection.mPMIncoming.mCurrentPacketSize);
+						memcpy_s(&(p->mBuffer[0]), connection.mPMIncoming.mCurrentPacketSize, connection.mBuffer, connection.mPMIncoming.mCurrentPacketSize);
+						connection.mPMIncoming.Append(p);
+						//std::cout << connection.ToString() << " : ";
+						
+						connection.mPMIncoming.mCurrentPacketSize = 0;
+						connection.mPMIncoming.mCurrentPacketExtractionOffset = 0;
+						connection.mPMIncoming.mCurrentTask = PacketManagerTask::ProcessPacketSize;
 					}
 				}
 				//std::cout << " Message of size " << bytesReceived << " received from " << connection.ToString() << std::endl;
 			}
+		}
+	}
+
+	for (int i = mConnections.size() - 1; i >= 0; i--) {
+		while (mConnections[i].mPMIncoming.HasPendingPackets()) {
+			std::shared_ptr<Packet> frontPacket = mConnections[i].mPMIncoming.Retrieve();
+			if (!ProcessPacket(frontPacket)) {
+				CloseConnection(i, "Failed to process incoming packet. Closing connection");
+				break;
+			}
+			mConnections[i].mPMIncoming.Pop();
 		}
 	}
 }
@@ -153,23 +173,23 @@ void Server::CloseConnection(int connectionIndex, std::string reason)
 	mConnections.erase(mConnections.begin() + connectionIndex);
 }
 
-bool Server::ProcessPacket(Packet& p)
+bool Server::ProcessPacket(std::shared_ptr<Packet> p)
 {
-	switch (p.GetPacketType()) {
+	switch (p->GetPacketType()) {
 	case IFTCP::PacketType::PT_ChatMessage :
 	{
 		std::string str;
-		p >> str;
+		(*p) >> str;
 		std::cout << "Chat Message : " << str ;
 		break;
 	}		
 	case IFTCP::PacketType::PT_IntegerArray: {
 		uint32_t sz = 0;
-		p >> sz;
+		(*p) >> sz;
 		//sz = htonl(sz);
 		for (int i = 0; i < sz; i++) {
 			int val;
-			p >> val;
+			(*p) >> val;
 			std::cout << val << " , ";
 		}
 		std::cout << std::endl;
@@ -177,11 +197,11 @@ bool Server::ProcessPacket(Packet& p)
 	}
 	case IFTCP::PacketType::PT_FloatArray: {
 		uint32_t sz = 0;
-		p >> sz;
+		(*p) >> sz;
 		//sz = htonl(sz);
 		for (int i = 0; i < sz; i++) {
 			float val;
-			p >> val;
+			(*p) >> val;
 			std::cout << (float)val << " , ";
 		}
 		std::cout << std::endl;
@@ -189,11 +209,11 @@ bool Server::ProcessPacket(Packet& p)
 	}
 	case IFTCP::PacketType::PT_DoubleArray: {
 		uint32_t sz = 0;
-		p >> sz;
+		(*p) >> sz;
 		//sz = htonl(sz);
 		for (int i = 0; i < sz; i++) {
 			double val;
-			p >> val;
+			(*p) >> val;
 			std::cout << (double)val << " , ";
 		}
 		std::cout << std::endl;
@@ -201,11 +221,11 @@ bool Server::ProcessPacket(Packet& p)
 	}
 	case IFTCP::PacketType::PT_CharArray: {
 		uint32_t sz = 0;
-		p >> sz;
+		(*p) >> sz;
 		//sz = htonl(sz);
 		for (int i = 0; i < sz; i++) {
 			char val;
-			p >> val;
+			(*p) >> val;
 			std::cout << val << " , ";
 		}
 		std::cout << std::endl;

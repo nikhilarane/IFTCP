@@ -9,7 +9,7 @@ public:
 	bool Initialise(IPEndpoint endPoint);
 	void Frame();
 	void CloseConnection(int connectionIndex, std::string reason);
-	bool ProcessPacket(Packet& packet);
+	bool ProcessPacket(std::shared_ptr<Packet> packet);
 private:
 	Socket mListeningSocket;
 	std::vector<TCPConnection> mConnections;
