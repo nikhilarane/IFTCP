@@ -12,8 +12,8 @@ namespace IFTCP {
 	{
 		mMasterFDs.clear();
 		mConnections.clear();
-		if (Network::Initialise()) {
-			std::cout << "initialised\n";
+		//if (Network::Initialise()) {
+		//	std::cout << "initialised\n";
 
 			mListeningSocket = Socket(endPoint.GetIPVersion());
 
@@ -41,12 +41,17 @@ namespace IFTCP {
 				std::cout << "Failed to create socket\n";
 			}
 
-		}
+		//}
 		return false;
 	}
 
 	void Server::Frame()
 	{
+		for (int i = 0; i < mConnections.size(); i++) {
+			if (mConnections[i].mPMOutGoing.HasPendingPackets()) {
+				mMasterFDs[i + 1].events = POLLRDNORM | POLLWRNORM;
+			}
+		}
 		mTempFDs = mMasterFDs;
 		if (WSAPoll(mTempFDs.data(), mTempFDs.size(), mAcceptTimeOut) > 0) {
 
@@ -59,15 +64,18 @@ namespace IFTCP {
 				if (mListeningSocket.Accept(newConnectionSocket, &newConnectionEndPoint) == IFTCP::PResult::P_Success) {
 					mConnections.emplace_back(TCPConnection(newConnectionSocket, newConnectionEndPoint));
 					TCPConnection& acceptedConnection = mConnections[mConnections.size() - 1];
-					std::cout << acceptedConnection.ToString() + " New Connection accepted\n";
+										//std::cout << acceptedConnection.ToString() + " New Connection accepted\n";
 					WSAPOLLFD newConnectionSocketFD = {};
 					newConnectionSocketFD.fd = newConnectionSocket.GetSocketHandle();
-					newConnectionSocketFD.events = POLLRDNORM | POLLWRNORM;
+					//newConnectionSocketFD.events = POLLRDNORM | POLLWRNORM;
+					newConnectionSocketFD.events = POLLRDNORM;
 					newConnectionSocketFD.revents = 0;
 					mMasterFDs.push_back(newConnectionSocketFD);
-					std::shared_ptr<Packet> welcomeMessage = std::make_shared<Packet>(PacketType::PT_ChatMessage);
+					OnConnect(acceptedConnection);
+
+					/*std::shared_ptr<Packet> welcomeMessage = std::make_shared<Packet>(PacketType::PT_ChatMessage);
 					*welcomeMessage << "Welcome to Nikhil's world " << acceptedConnection.ToString();
-					acceptedConnection.mPMOutGoing.Append(welcomeMessage);
+					acceptedConnection.mPMOutGoing.Append(welcomeMessage);*/
 					//acceptedConnection.Close();
 				}
 				else {
@@ -196,7 +204,9 @@ namespace IFTCP {
 						}
 					}
 				}
-
+				if (!pm.HasPendingPackets()) {
+					mMasterFDs[i].events = POLLRDNORM;
+				}
 			}
 		}
 
@@ -226,7 +236,8 @@ namespace IFTCP {
 	void Server::CloseConnection(int connectionIndex, std::string reason)
 	{
 		TCPConnection &connection = mConnections[connectionIndex];
-		std::cout << "[ " << reason << " ]" << connection.ToString() << std::endl;
+		OnDisconnect(connection, reason);
+		//std::cout << "[ " << reason << " ]" << connection.ToString() << std::endl;
 		mMasterFDs.erase(mMasterFDs.begin() + connectionIndex + 1);
 		mTempFDs.erase(mTempFDs.begin() + connectionIndex + 1);
 		connection.Close();
@@ -235,66 +246,67 @@ namespace IFTCP {
 
 	bool Server::ProcessPacket(std::shared_ptr<Packet> p)
 	{
-		switch (p->GetPacketType()) {
-		case IFTCP::PacketType::PT_ChatMessage:
-		{
-			std::string str;
-			(*p) >> str;
-			std::cout << "Chat Message : " << str;
-			break;
-		}
-		case IFTCP::PacketType::PT_IntegerArray: {
-			uint32_t sz = 0;
-			(*p) >> sz;
-			//sz = htonl(sz);
-			for (int i = 0; i < sz; i++) {
-				int val;
-				(*p) >> val;
-				std::cout << val << " , ";
-			}
-			std::cout << std::endl;
-			break;
-		}
-		case IFTCP::PacketType::PT_FloatArray: {
-			uint32_t sz = 0;
-			(*p) >> sz;
-			//sz = htonl(sz);
-			for (int i = 0; i < sz; i++) {
-				float val;
-				(*p) >> val;
-				std::cout << (float)val << " , ";
-			}
-			std::cout << std::endl;
-			break;
-		}
-		case IFTCP::PacketType::PT_DoubleArray: {
-			uint32_t sz = 0;
-			(*p) >> sz;
-			//sz = htonl(sz);
-			for (int i = 0; i < sz; i++) {
-				double val;
-				(*p) >> val;
-				std::cout << (double)val << " , ";
-			}
-			std::cout << std::endl;
-			break;
-		}
-		case IFTCP::PacketType::PT_CharArray: {
-			uint32_t sz = 0;
-			(*p) >> sz;
-			//sz = htonl(sz);
-			for (int i = 0; i < sz; i++) {
-				char val;
-				(*p) >> val;
-				std::cout << val << " , ";
-			}
-			std::cout << std::endl;
-			break;
-		}
-		default:
-			std::cout << "unknown packet type\n";
-			return false;
-		}
+		//switch (p->GetPacketType()) {
+		//case IFTCP::PacketType::PT_ChatMessage:
+		//{
+		//	std::string str;
+		//	(*p) >> str;
+		//	std::cout << "Chat Message : " << str;
+		//	break;
+		//}
+		//case IFTCP::PacketType::PT_IntegerArray: {
+		//	uint32_t sz = 0;
+		//	(*p) >> sz;
+		//	//sz = htonl(sz);
+		//	for (int i = 0; i < sz; i++) {
+		//		int val;
+		//		(*p) >> val;
+		//		std::cout << val << " , ";
+		//	}
+		//	std::cout << std::endl;
+		//	break;
+		//}
+		//case IFTCP::PacketType::PT_FloatArray: {
+		//	uint32_t sz = 0;
+		//	(*p) >> sz;
+		//	//sz = htonl(sz);
+		//	for (int i = 0; i < sz; i++) {
+		//		float val;
+		//		(*p) >> val;
+		//		std::cout << (float)val << " , ";
+		//	}
+		//	std::cout << std::endl;
+		//	break;
+		//}
+		//case IFTCP::PacketType::PT_DoubleArray: {
+		//	uint32_t sz = 0;
+		//	(*p) >> sz;
+		//	//sz = htonl(sz);
+		//	for (int i = 0; i < sz; i++) {
+		//		double val;
+		//		(*p) >> val;
+		//		std::cout << (double)val << " , ";
+		//	}
+		//	std::cout << std::endl;
+		//	break;
+		//}
+		//case IFTCP::PacketType::PT_CharArray: {
+		//	uint32_t sz = 0;
+		//	(*p) >> sz;
+		//	//sz = htonl(sz);
+		//	for (int i = 0; i < sz; i++) {
+		//		char val;
+		//		(*p) >> val;
+		//		std::cout << val << " , ";
+		//	}
+		//	std::cout << std::endl;
+		//	break;
+		//}
+		//default:
+		//	std::cout << "unknown packet type\n";
+		//	return false;
+		//}
+		std::cout << "packet received with size " << p->mBuffer.size() << std::endl;
 		return true;
 	}
 

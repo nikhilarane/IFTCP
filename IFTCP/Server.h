@@ -1,6 +1,5 @@
 #ifndef _SERVER_
 #define _SERVER_
-
 #include "TCPConnection.h"
 
 namespace IFTCP {

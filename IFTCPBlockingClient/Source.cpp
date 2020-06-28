@@ -1,4 +1,4 @@
-#include "Client.h"
+#include "Client1.h"
 #include <iostream>
 int mainBlocking() {
 	//int val = IFTCP::Foo(10);
@@ -119,12 +119,14 @@ int mainBlocking() {
 }
 
 int main() {
-	Client client;
-	if (client.Connect(IPEndpoint("::1", 9999))) {
-		while (client.IsConnected()) {
-			client.Frame();
+	Client1 client;
+	if (IFTCP::Network::Initialise()) {
+		if (client.Connect(IPEndpoint("::1", 9999))) {
+			while (client.IsConnected()) {
+				client.Frame();
+			}
 		}
-	}
+	}	
 	IFTCP::Network::Shutdown();
 	system("pause");
 	return 0;

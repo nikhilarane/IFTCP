@@ -11,7 +11,7 @@ namespace IFTCP {
 	};*/
 	class TCPConnection {
 	public:
-		
+		TCPConnection():mSocket(Socket()) {}
 		TCPConnection(Socket socket, IPEndpoint endPoint);
 		void Close();
 		std::string ToString();

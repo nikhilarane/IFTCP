@@ -1,6 +1,6 @@
 //#include <IFTCP\IncludeIFTCPIP.h>
 #include <iostream>
-#include "Server.h"
+#include "Server1.h"
 
 //bool ProcessPacket(IFTCP::Packet& p) {
 //	switch (p.GetPacketType()) {
@@ -195,11 +195,14 @@ int mainBlocking() {
 }
 
 int main() {
-	Server server;
-	server.Initialise(IPEndpoint("::1", 9999));
-	while (true) {
-		server.Frame();
+	if (Network::Initialise()) {
+		Server1 server;
+		server.Initialise(IPEndpoint("::1", 9999));
+		while (true) {
+			server.Frame();
+		}
 	}
+	
 	IFTCP::Network::Shutdown();
 	system("pause");
 	return 0;
