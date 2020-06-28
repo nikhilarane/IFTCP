@@ -9,6 +9,7 @@ public:
 	bool Connect(IPEndpoint endPoint);
 	bool IsConnected();
 	bool Frame();
+	bool ProcessPacket(Packet & p);
 private:
 	bool mIsConnected;
 	Socket mSocket;

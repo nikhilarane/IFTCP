@@ -56,9 +56,12 @@ void Server::Frame()
 				std::cout << acceptedConnection.ToString() + " New Connection accepted\n";
 				WSAPOLLFD newConnectionSocketFD = {};
 				newConnectionSocketFD.fd = newConnectionSocket.GetSocketHandle();
-				newConnectionSocketFD.events = POLLRDNORM;
+				newConnectionSocketFD.events = POLLRDNORM | POLLWRNORM;
 				newConnectionSocketFD.revents = 0;
 				mMasterFDs.push_back(newConnectionSocketFD);
+				std::shared_ptr<Packet> welcomeMessage = std::make_shared<Packet>(PacketType::PT_ChatMessage);
+				*welcomeMessage << "Welcome to Nikhil's world " << acceptedConnection.ToString();
+				acceptedConnection.mPMOutGoing.Append(welcomeMessage);
 				//acceptedConnection.Close();
 			}
 			else {
@@ -148,6 +151,46 @@ void Server::Frame()
 				}
 				//std::cout << " Message of size " << bytesReceived << " received from " << connection.ToString() << std::endl;
 			}
+		}
+
+		if (mTempFDs[i].revents & POLLWRNORM) {
+			PacketManager& pm = connection.mPMOutGoing;
+
+			while (pm.HasPendingPackets()) {
+				if (pm.mCurrentTask == PacketManagerTask::ProcessPacketSize) {
+					pm.mCurrentPacketSize = pm.Retrieve()->mBuffer.size();
+					uint16_t bigEndianPacketSize = htons(pm.mCurrentPacketSize);
+					int bytesSent = send(mTempFDs[i].fd, (char*)&bigEndianPacketSize + pm.mCurrentPacketExtractionOffset, sizeof(uint16_t) - pm.mCurrentPacketExtractionOffset, 0);
+					//or you can also use
+					//int bytesSent = send(connection.mSocket.GetSocketHandle(), (char*)&bigEndianPacketSize  + pm.mCurrentPacketExtractionOffset, sizeof(uint16_t)  - pm.mCurrentPacketExtractionOffset, 0);
+					if (bytesSent > 0) {
+						pm.mCurrentPacketExtractionOffset += bytesSent;
+					}
+					if (bytesSent == sizeof(uint16_t)) {
+						pm.mCurrentPacketExtractionOffset = 0;
+						pm.mCurrentTask = PacketManagerTask::ProcessPacketContents;
+					}
+					else {
+						break;//get in the next call to the Frame function
+					}
+				}
+				else {
+					char *bufferPtr = &pm.Retrieve()->mBuffer[0];
+					int bytesSent = send(mTempFDs[i].fd, (char*)bufferPtr + pm.mCurrentPacketExtractionOffset,pm.mCurrentPacketSize - pm.mCurrentPacketExtractionOffset, 0);
+					if (bytesSent > 0) {
+						pm.mCurrentPacketExtractionOffset += bytesSent;
+					}
+					if (bytesSent == pm.mCurrentPacketSize) {
+						pm.mCurrentPacketExtractionOffset = 0;
+						pm.mCurrentTask = PacketManagerTask::ProcessPacketSize;
+						pm.Pop();
+					}
+					else {
+						break;//get in the next call to the Frame function
+					}
+				}
+			}
+
 		}
 	}
 
