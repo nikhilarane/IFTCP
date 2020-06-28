@@ -2,6 +2,7 @@
 #define _TCPCONNECTION_
 #include "Socket.h"
 #include "PacketManager.h"
+//#include <string>
 
 namespace IFTCP {
 	/*enum PacketTask {

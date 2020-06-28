@@ -1,6 +1,6 @@
 #ifndef _HELPERS_
 #define _HELPERS_
-#pragma once
+//#pragma once
 #include <algorithm> 
 #include <cctype>
 #include <locale>
