@@ -279,6 +279,16 @@ namespace IFTCP {
 		return true;
 	}
 
+	bool Client::SendPacket(Packet p)
+	{
+		std::shared_ptr<Packet> message = std::make_shared<Packet>(p);
+		if (IsConnected()) {
+			mConnection.mPMOutGoing.Append(message);
+			return true;
+		}
+		return false;
+	}
+
 	void Client::OnConnect()
 	{
 		std::cout << "Successfully connected\n";

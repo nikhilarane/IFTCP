@@ -310,4 +310,24 @@ namespace IFTCP {
 		return true;
 	}
 
+	bool Server::SendPacket(Packet p, int connection_number)
+	{
+		if (mConnections.size() == 0) {
+			return false;
+		}
+		if (connection_number > (int)mConnections.size())
+			return false;		
+		else if (connection_number == -1) {
+			std::shared_ptr<Packet> message = std::make_shared<Packet>(p);
+			for (int i = 0; i < mConnections.size(); i++) {
+				mConnections[i].mPMOutGoing.Append(message);
+			}
+		}
+		else {
+			std::shared_ptr<Packet> message = std::make_shared<Packet>(p);
+			mConnections[connection_number].mPMOutGoing.Append(message);
+		}		
+		return false;
+	}
+
 }

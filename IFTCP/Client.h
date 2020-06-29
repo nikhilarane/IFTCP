@@ -8,6 +8,7 @@ namespace IFTCP {
 		bool Connect(IPEndpoint endPoint);
 		bool IsConnected();
 		bool Frame();
+		bool SendPacket(Packet p);
 	protected:
 		virtual void OnConnect();
 		virtual void OnConnectFail();

@@ -195,11 +195,75 @@ int mainBlocking() {
 }
 
 int main() {
+
+	IFTCP::Packet stringPacket(IFTCP::PacketType::PT_ChatMessage);
+	stringPacket << "Hello TCP World\n";
+
+	IFTCP::Packet integerArrayPacket(IFTCP::PacketType::PT_IntegerArray);
+	const uint32_t array_size = 6;
+	int integerArray[array_size] = { -1,-5,0,18,100,52 };
+	integerArrayPacket << array_size;
+	for (auto var : integerArray)
+	{
+		integerArrayPacket << var;
+	}
+	IFTCP::Packet floatArrayPacket(IFTCP::PacketType::PT_FloatArray);
+	const uint32_t floatarray_size = 5;
+	float floatintegerArray[floatarray_size] = { -1.8f,-5.3f,0.0f,18.99f,100.897f };
+	floatArrayPacket << floatarray_size;
+	for (auto var : floatintegerArray)
+	{
+		floatArrayPacket << var;
+	}
+
+	IFTCP::Packet doubleArrayPacket(IFTCP::PacketType::PT_DoubleArray);
+	const uint32_t doublearray_size = 7;
+	double doubleintegerArray[doublearray_size] = { 10.4,-1.8,-5.3,0.0,18.99, 100.897, 6789564.87654 };
+	doubleArrayPacket << doublearray_size;
+	for (auto var : doubleintegerArray)
+	{
+		doubleArrayPacket << var;
+	}
+
+	IFTCP::Packet charArrayPacket(IFTCP::PacketType::PT_CharArray);
+	const uint32_t chararray_size = 2;
+	char charArray[chararray_size] = { 'N','R' };
+	charArrayPacket << chararray_size;
+	for (auto var : charArray)
+	{
+		charArrayPacket << var;
+	}
 	if (Network::Initialise()) {
 		Server1 server;
 		server.Initialise(IPEndpoint("::1", 9999));
 		while (true) {
 			server.Frame();
+			bool result;
+			int gamble = rand() % 1000;
+			if (gamble == 0) {
+				result = server.SendPacket(integerArrayPacket, -1);
+			}
+			else if (gamble == 1) {
+
+				result = server.SendPacket(stringPacket, -1);
+			}
+			else if (gamble == 2) {
+
+				result = server.SendPacket(doubleArrayPacket, -1);
+			}
+			else if (gamble == 3) {
+
+				result = server.SendPacket(charArrayPacket, -1);
+			}
+			else if(gamble == 4){
+				result = server.SendPacket(floatArrayPacket, -1);
+			}
+			else {
+				//do notihing
+			}
+			//if (result != IFTCP::PResult::P_Success) {
+			//	break;
+			//}
 		}
 	}
 	
